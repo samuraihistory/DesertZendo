@@ -310,6 +310,7 @@
     settings.lengthDays = Number(lengthDaysInput.value) || 90;
     saveSettings(settings);
     renderHeader();
+    loadDayIntoForm(logDateInput.value);
     const status = document.getElementById("settingsStatus");
     status.textContent = "Saved.";
     setTimeout(() => (status.textContent = ""), 2000);
