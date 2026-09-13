@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desert Zendo — 90-Day Ango Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="header-top">
+    <h1>Desert Zendo</h1>
+    <p class="subtitle">90-Day Home Ango Tracker</p>
+  </div>
+  <div class="day-counter" id="dayCounter">
+    <span id="dayLabel">Day — of —</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-view="today">Today</button>
+  <button class="tab-btn" data-view="history">History</button>
+  <button class="tab-btn" data-view="summary">Summary</button>
+  <button class="tab-btn" data-view="settings">Settings</button>
+</nav>
+
+<main>
+  <section id="view-today" class="view active">
+    <div class="card">
+      <div class="field-row">
+        <label for="logDate">Date</label>
+        <input type="date" id="logDate">
+        <span id="logDayNote" class="muted"></span>
+      </div>
+
+      <div class="field-row">
+        <label for="zazenMinutes">Zazen minutes</label>
+        <input type="number" id="zazenMinutes" min="0" step="5" placeholder="0">
+        <label for="zazenSessions">Sessions</label>
+        <input type="number" id="zazenSessions" min="0" step="1" placeholder="0">
+      </div>
+
+      <fieldset class="checklist" id="practiceChecklist">
+        <legend>Practice</legend>
+      </fieldset>
+
+      <div class="field-row">
+        <label for="journal">Reflection / journal</label>
+      </div>
+      <textarea id="journal" rows="5" placeholder="Notes on today's sitting, insight, difficulty..."></textarea>
+
+      <div class="actions">
+        <button id="saveDayBtn" class="primary">Save entry</button>
+        <span id="saveStatus" class="muted"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-history" class="view">
+    <div class="card">
+      <table class="history-table" id="historyTable">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Date</th>
+            <th>Zazen</th>
+            <th>Practice</th>
+            <th>Journal</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <p id="historyEmpty" class="muted" hidden>No entries logged yet.</p>
+    </div>
+  </section>
+
+  <section id="view-summary" class="view">
+    <div class="card">
+      <h2>Ango Summary</h2>
+      <div class="stat-grid" id="statGrid"></div>
+      <h3>Practice completion</h3>
+      <div id="practiceStats" class="practice-stats"></div>
+    </div>
+    <div class="card">
+      <div class="actions" style="justify-content: space-between;">
+        <h2 style="margin:0;">Journal export</h2>
+        <button id="exportJournalBtn">Download journal (.md)</button>
+      </div>
+      <pre id="journalPreview" class="journal-preview"></pre>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <div class="card">
+      <h2>Ango settings</h2>
+      <div class="field-row">
+        <label for="startDate">Start date</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="field-row">
+        <label for="lengthDays">Length (days)</label>
+        <input type="number" id="lengthDays" min="1" step="1">
+      </div>
+      <div class="actions">
+        <button id="saveSettingsBtn" class="primary">Save settings</button>
+        <span id="settingsStatus" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="muted">Export all your data to a JSON file, or restore from a previous export.</p>
+      <div class="actions">
+        <button id="exportDataBtn">Export data (.json)</button>
+        <label class="file-btn">
+          Import data (.json)
+          <input type="file" id="importDataInput" accept="application/json" hidden>
+        </label>
+      </div>
+      <p id="backupStatus" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <h2>Danger zone</h2>
+      <button id="clearDataBtn" class="danger">Clear all data</button>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
