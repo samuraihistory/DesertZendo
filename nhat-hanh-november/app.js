@@ -86,10 +86,16 @@
     const base = {
       year: defaultYear(),
       bell: { every: 30, from: "08:00", to: "20:00", volume: 0.6 },
+      cardsOpen: { readingCard: true, zenCard: true },
     };
     if (!raw) return base;
     const saved = JSON.parse(raw);
-    return { ...base, ...saved, bell: { ...base.bell, ...(saved.bell || {}) } };
+    return {
+      ...base,
+      ...saved,
+      bell: { ...base.bell, ...(saved.bell || {}) },
+      cardsOpen: { ...base.cardsOpen, ...(saved.cardsOpen || {}) },
+    };
   }
 
   function saveSettings() {
@@ -284,17 +290,46 @@
     document.getElementById("themeEyebrow").textContent = `Day ${n} · ${parseISO(selected).toLocaleDateString(undefined, { month: "long", day: "numeric" })}`;
     document.getElementById("themeTitle").textContent = theme.title;
     document.getElementById("themePractice").textContent = theme.practice;
-    const sourceEl = document.getElementById("themeSource");
-    sourceEl.innerHTML = "";
-    if (theme.source) {
-      const a = document.createElement("a");
-      a.href = theme.source.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.textContent = theme.source.name;
-      sourceEl.append("Read the source: ", a);
-    }
     document.getElementById("diaryPrompt").textContent = theme.prompt;
+    renderReading(n);
+    renderZen(n);
+  }
+
+  ["readingCard", "zenCard"].forEach((id) => {
+    const card = document.getElementById(id);
+    card.open = settings.cardsOpen[id];
+    card.addEventListener("toggle", () => {
+      settings.cardsOpen[id] = card.open;
+      saveSettings();
+    });
+  });
+
+  function renderReading(n) {
+    const reading = window.NHN_READINGS[n - 1];
+    document.getElementById("readingTitle").textContent = reading.title;
+    document.getElementById("readingCite").textContent = reading.collection;
+    document.getElementById("readingLink").href = reading.url;
+    const body = document.getElementById("readingBody");
+    body.innerHTML = "";
+    reading.blocks.forEach((block) => {
+      const p = document.createElement("p");
+      if (block.verse) p.className = "verse";
+      p.textContent = block.text;
+      body.appendChild(p);
+    });
+  }
+
+  function renderZen(n) {
+    const zen = window.NHN_ZEN[n - 1];
+    const original = document.getElementById("zenOriginal");
+    original.textContent = zen.original;
+    original.lang = zen.lang;
+    const reading = document.getElementById("zenReading");
+    reading.textContent = zen.reading || "";
+    reading.hidden = !zen.reading;
+    // "/" marks a line break in verse renderings.
+    document.getElementById("zenEnglish").textContent = zen.english.replace(/ \/ /g, "\n");
+    document.getElementById("zenCite").textContent = `${zen.who} · ${zen.work}`;
   }
 
   function renderToday() {

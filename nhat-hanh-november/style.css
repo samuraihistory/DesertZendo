@@ -141,6 +141,30 @@ main { max-width: 720px; margin: 0 auto; }
 .theme-card h2 { font-size: 1.3rem; margin-bottom: 8px; }
 .theme-card p { line-height: 1.55; }
 
+/* Reading & Zen cards */
+details.card > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary .eyebrow::after { content: " ▸"; }
+details.card[open] > summary .eyebrow::after { content: " ▾"; }
+
+.reading-card { border-left: 4px solid var(--ochre); }
+.reading-title { font-weight: 600; font-size: 1.05rem; }
+.reading-body p { line-height: 1.6; margin: 10px 0; }
+.reading-body p.verse { white-space: pre-line; font-style: italic; padding-left: 14px; }
+.reading-credit { margin-bottom: 0; }
+
+.zen-card { border-left: 4px solid var(--lotus); }
+.zen-original { font-size: 1.25rem; line-height: 1.7; margin: 10px 0 4px; letter-spacing: 0.04em; }
+.zen-reading { font-style: italic; margin: 0 0 8px; }
+.zen-english { white-space: pre-line; line-height: 1.6; font-size: 1.02rem; }
+
 .eyebrow {
   margin: 0 0 4px;
   font-size: 0.78rem;

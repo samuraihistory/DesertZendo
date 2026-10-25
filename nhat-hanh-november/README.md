@@ -5,8 +5,10 @@ the everyday mindfulness Thich Nhat Hanh taught in the 1990s and 2000s:
 breathing, walking, eating, listening, and resting with full attention.
 
 Independent and unaffiliated: all practice text is original, the bell is
-synthesized in the browser, and sutta links go to public-domain (CC0)
-translations. See [DATASETS.md](DATASETS.md) for sources and licensing notes.
+synthesized in the browser, daily readings are public-domain (CC0)
+translations, and the Zen sayings are public-domain classics with English
+renderings written for this app. See [DATASETS.md](DATASETS.md) for
+sources and licensing notes.
 
 No build step or dependencies — plain HTML/CSS/JS, like the ango tracker in
 the repo root.
@@ -23,8 +25,9 @@ directly also works.
 ## Features
 
 - **Today**: a theme for each of the 30 days (practice plus evening diary
-  prompt), a practice checklist, meditation minutes, mood, diary, gratitude,
-  and an intention for tomorrow. Saves as you type.
+  prompt), a short early-Buddhist reading, a Zen word in the original
+  language with an English rendering, a practice checklist, meditation
+  minutes, mood, diary, gratitude, and an intention for tomorrow. Saves as you type.
 - **Meals**: log each meal with hunger and fullness, plus plant-based,
   paused-before-eating, no-screens, and ate-slowly flags.
 - **Sit**: meditation timer with opening, interval and closing bells, an
@@ -37,5 +40,18 @@ directly also works.
 - **Month**: totals, streaks, practice completion, diary export (`.md`),
   JSON backup and restore, and the year setting.
 
+## Your data
+
 Data lives only in this browser's `localStorage`. Use **Month → Export data**
 to back it up.
+
+## Updating the readings
+
+The daily readings are bundled in `readings.js`, so the app works offline.
+The file is generated from SuttaCentral's
+[bilara-data](https://github.com/suttacentral/bilara-data). To change a
+passage, edit the `DAYS` list in `tools/build_readings.py` and run:
+
+```
+python3 tools/build_readings.py
+```

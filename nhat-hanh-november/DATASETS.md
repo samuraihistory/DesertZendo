@@ -59,13 +59,27 @@ intellectual property. This is practical guidance, not legal advice.
 
 | Source | What | License | Use in app |
 |---|---|---|---|
-| [SuttaCentral bilara-data](https://github.com/suttacentral/bilara-data) | Pali canon, segmented JSON, with Bhikkhu Sujato's English translations | **CC0**: translations in bilara-data must be CC0, and Sujato has waived all rights | Daily theme sources link to these. You could also bundle passages offline, e.g. MN 118 (breathing), MN 10 (four foundations), MN 131 (present moment), AN 5.57 (five remembrances), Snp 1.8 (metta), SN 22.43 (be an island) |
-| [SuttaCentral API](https://suttacentral.net) | Same texts over HTTP | CC0 for Sujato translations | Fetch a passage for a "daily reading" card |
+| [SuttaCentral bilara-data](https://github.com/suttacentral/bilara-data) | Pali canon, segmented JSON, with Bhikkhu Sujato's English translations | **CC0**: the repo's LICENSE.md says all Bilara translations are dedicated to the public domain | **In use.** `tools/build_readings.py` pulls one passage per day into `readings.js`, so readings work offline. Edit the `DAYS` list and re-run it to change a passage |
 | Access to Insight (Thanissaro Bhikkhu translations) | Widely used English suttas | **CC BY-NC 4.0**: non-commercial only | Avoid if you might ever charge for the app |
 
 These are the discourses TNH wrote his own commentaries on in this period.
 His commentaries are copyrighted, but the sutta texts aren't, so the app can
 go back to the same sources.
+
+### Zen sayings
+
+The daily "Zen word" (`zen.js`) draws on classical Chinese, Japanese and
+Vietnamese Zen: Linji, Zhaozhou, Yunmen, the *Gateless Barrier* and *Blue
+Cliff Record*, Huineng, Dōgen, Hakuin, Ryōkan, Bashō, and Trần Nhân Tông,
+founder of the Vietnamese Trúc Lâm school. Thich Nhat Hanh was ordained in
+the Vietnamese Lâm Tế (Linji) line, so these are his roots.
+
+| Source | License | Notes |
+|---|---|---|
+| Original texts (Chinese, Japanese, literary Chinese read in Vietnamese) | Public domain: all are centuries old | Shown in the original with a reading for Japanese and Vietnamese |
+| English renderings | Written for this app | Published English translations (Cleary, Sekida, Aitken, Watson, etc.) are under copyright, so none are used |
+| [CBETA](https://cbeta.org) | Free for non-commercial use; check terms before commercial use | Digital Chinese Buddhist canon, useful for checking the originals or finding more |
+| Wikisource (zh / ja / vi) | Originals are public domain | Plain texts of the *Gateless Barrier*, *Faith in Mind*, Hakuin's *Song in Praise of Zazen*, and *Cư trần lạc đạo phú* |
 
 ### Meals
 

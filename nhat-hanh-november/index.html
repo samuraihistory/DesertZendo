@@ -41,8 +41,27 @@
       <p class="eyebrow" id="themeEyebrow">Day 1</p>
       <h2 id="themeTitle"></h2>
       <p id="themePractice"></p>
-      <p id="themeSource" class="muted"></p>
     </div>
+
+    <details class="card reading-card" id="readingCard" open>
+      <summary>
+        <span class="eyebrow">Reading</span>
+        <span class="reading-title" id="readingTitle"></span>
+      </summary>
+      <div id="readingBody" class="reading-body"></div>
+      <p class="muted reading-credit">
+        <span id="readingCite"></span> · tr. Bhikkhu Sujato ·
+        <a id="readingLink" target="_blank" rel="noopener">full text on SuttaCentral</a>
+      </p>
+    </details>
+
+    <details class="card zen-card" id="zenCard" open>
+      <summary><span class="eyebrow">Zen word</span></summary>
+      <p class="zen-original" id="zenOriginal"></p>
+      <p class="zen-reading muted" id="zenReading"></p>
+      <p class="zen-english" id="zenEnglish"></p>
+      <p class="muted" id="zenCite"></p>
+    </details>
 
     <div class="card">
       <fieldset class="checklist" id="practiceChecklist">
@@ -251,13 +270,17 @@
     <p class="muted disclaimer">
       An independent, personal practice tool inspired by the everyday teachings of
       Thich Nhat Hanh. Not affiliated with or endorsed by Plum Village or any
-      associated organization. Practice text is original to this app; linked
-      sutta translations are by Bhikkhu Sujato (public domain, via SuttaCentral).
+      associated organization. Practice text is original to this app. Daily
+      readings are Bhikkhu Sujato's translations from SuttaCentral (public
+      domain, CC0). Zen sayings are public-domain classics in English
+      renderings written for this app.
     </p>
   </section>
 </main>
 
 <script src="data.js"></script>
+<script src="readings.js"></script>
+<script src="zen.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

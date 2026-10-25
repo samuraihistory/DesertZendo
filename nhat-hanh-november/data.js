@@ -4,14 +4,11 @@
 // inspired by the everyday practices Thich Nhat Hanh taught in the 1990s and
 // 2000s (mindful breathing, walking, eating, deep listening, and so on), but it
 // does not quote his books, Plum Village liturgy, or gathas, which are under
-// copyright. Where a practice rests on an early Buddhist text, the `source`
-// links to Bhikkhu Sujato's translation on SuttaCentral, which is dedicated to
-// the public domain (CC0). See DATASETS.md for licensing notes.
+// copyright. Each day's early-Buddhist reading lives in readings.js and its
+// Zen saying in zen.js. See DATASETS.md for licensing notes.
 
 window.NHN_DATA = (function () {
   "use strict";
-
-  const sc = (uid, name) => ({ name, url: `https://suttacentral.net/${uid}/en/sujato` });
 
   // One theme per day of November. `practice` is the thing to do today;
   // `prompt` is the diary question for the evening.
@@ -21,14 +18,12 @@ window.NHN_DATA = (function () {
       practice:
         "Three times today, stop whatever you are doing and follow one full breath in and one full breath out. Notice that the breath is long or short without changing it. That's all.",
       prompt: "When did you actually feel present today? What brought you there?",
-      source: sc("mn118", "Ānāpānassati Sutta (MN 118) — mindfulness of breathing"),
     },
     {
       title: "Walking without a destination",
       practice:
         "Walk somewhere slowly for ten minutes — a hallway, a yard, a sidewalk. Match your steps to your breath. You are not going anywhere; each step is already the arrival.",
       prompt: "What did you notice underfoot that you usually miss?",
-      source: sc("mn10", "Satipaṭṭhāna Sutta (MN 10) — mindfulness of the body"),
     },
     {
       title: "Dishes for their own sake",
@@ -65,14 +60,12 @@ window.NHN_DATA = (function () {
       practice:
         "Lie on your back for fifteen minutes. Move your attention slowly from the feet to the crown of the head, thanking each part of the body and letting it soften.",
       prompt: "Which part of your body has been working hardest lately?",
-      source: sc("mn10", "Satipaṭṭhāna Sutta (MN 10) — mindfulness of the body"),
     },
     {
       title: "Holding a hard feeling",
       practice:
         "When irritation or sadness arises, don't push it away or act on it. Breathe with it the way you would hold a crying child — gently, without needing it to stop right away.",
       prompt: "What feeling visited today, and what was underneath it?",
-      source: sc("mn10", "Satipaṭṭhāna Sutta (MN 10) — mindfulness of feelings"),
     },
     {
       title: "Listening all the way",
@@ -85,7 +78,6 @@ window.NHN_DATA = (function () {
       practice:
         "Before speaking today, ask: is it true, is it kind, is it the right time? Say one thing to someone that is true and that they would be glad to hear.",
       prompt: "What did you say — or not say — that you're glad about?",
-      source: sc("an5.198", "Vācā Sutta (AN 5.198) — well-spoken words"),
     },
     {
       title: "What is your breakfast made of?",
@@ -98,14 +90,12 @@ window.NHN_DATA = (function () {
       practice:
         "Sit for ten minutes with the plain facts: this body ages, gets sick, will die; everything I love will change. Let it make today more precious, not more anxious.",
       prompt: "Knowing nothing lasts, what do you want to give your time to?",
-      source: sc("an5.57", "Upajjhatabbaṭhāna Sutta (AN 5.57) — five things to reflect on often"),
     },
     {
       title: "Only this moment",
       practice:
         "Whenever you catch yourself rehearsing the future or replaying the past, come back to one breath and one thing you can see right now.",
       prompt: "Where did your mind keep traveling today?",
-      source: sc("mn131", "Bhaddekaratta Sutta (MN 131) — one fine night"),
     },
     {
       title: "An unscheduled day",
@@ -154,7 +144,6 @@ window.NHN_DATA = (function () {
       practice:
         "Sit for ten minutes and silently wish wellbeing to yourself, then someone you love, then someone neutral, then someone difficult: may you be safe, may you be at ease.",
       prompt: "Was it harder to wish yourself well, or the difficult person?",
-      source: sc("snp1.8", "Metta Sutta (Snp 1.8) — loving-kindness"),
     },
     {
       title: "Starting over",
@@ -191,14 +180,12 @@ window.NHN_DATA = (function () {
       practice:
         "Make a list of the conditions for happiness you already have — eyes that see, legs that walk, a roof, a friend. Spend the day enjoying at least three of them on purpose.",
       prompt: "Which ordinary good thing did you finally notice?",
-      source: sc("mn118", "Ānāpānassati Sutta (MN 118) — breathing while experiencing joy"),
     },
     {
       title: "An island of yourself",
       practice:
         "When you feel swept along by worry or other people's moods, return to the breath as a safe island inside you. Nobody can take it away.",
       prompt: "What helps you come home to yourself?",
-      source: sc("sn22.43", "Attadīpa Sutta (SN 22.43) — be an island"),
     },
     {
       title: "Continuation",
