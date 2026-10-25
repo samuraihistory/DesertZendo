@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhat Hanh November</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="header-top">
+    <h1>Nhat Hanh November</h1>
+    <p class="subtitle">Thirty days of mindful living</p>
+  </div>
+  <div class="day-counter">
+    <span id="dayLabel">Day — of 30</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-view="today">Today</button>
+  <button class="tab-btn" data-view="meals">Meals</button>
+  <button class="tab-btn" data-view="sit">Sit</button>
+  <button class="tab-btn" data-view="bell">Bell</button>
+  <button class="tab-btn" data-view="calendar">Calendar</button>
+  <button class="tab-btn" data-view="month">Month</button>
+</nav>
+
+<main>
+  <div class="date-bar">
+    <button id="prevDayBtn" aria-label="Previous day">‹</button>
+    <input type="date" id="selDate">
+    <button id="nextDayBtn" aria-label="Next day">›</button>
+    <span id="selDayNote" class="muted"></span>
+  </div>
+
+  <!-- Today: theme, practice checklist, diary -->
+  <section id="view-today" class="view active">
+    <div class="card theme-card">
+      <p class="eyebrow" id="themeEyebrow">Day 1</p>
+      <h2 id="themeTitle"></h2>
+      <p id="themePractice"></p>
+      <p id="themeSource" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <fieldset class="checklist" id="practiceChecklist">
+        <legend>Practice today</legend>
+      </fieldset>
+
+      <div class="field-row">
+        <label for="sitMinutes">Meditation minutes</label>
+        <input type="number" id="sitMinutes" min="0" step="5" placeholder="0">
+      </div>
+
+      <div class="field-row">
+        <span class="field-label">Mood</span>
+        <div class="mood-row" id="moodRow"></div>
+      </div>
+
+      <label class="block-label" for="diary" id="diaryPrompt">Diary</label>
+      <textarea id="diary" rows="6" placeholder="Write freely…"></textarea>
+
+      <label class="block-label" for="gratitude">Three things I'm grateful for</label>
+      <textarea id="gratitude" rows="3"></textarea>
+
+      <label class="block-label" for="intention">Intention for tomorrow</label>
+      <input type="text" id="intention" class="wide">
+
+      <p id="saveStatus" class="muted">Changes save automatically.</p>
+    </div>
+  </section>
+
+  <!-- Meals -->
+  <section id="view-meals" class="view">
+    <div class="card">
+      <h2>Add a meal</h2>
+      <div class="field-row">
+        <label for="mealType">Meal</label>
+        <select id="mealType"></select>
+      </div>
+      <label class="block-label" for="mealWhat">What I ate</label>
+      <input type="text" id="mealWhat" class="wide" placeholder="Miso soup, rice, steamed greens">
+      <div class="checklist-inline">
+        <label><input type="checkbox" id="mealPlant"> Plant-based</label>
+        <label><input type="checkbox" id="mealPause"> Paused before eating</label>
+        <label><input type="checkbox" id="mealNoScreens"> No screens or reading</label>
+        <label><input type="checkbox" id="mealSlow"> Chewed slowly, put the fork down</label>
+      </div>
+      <div class="field-row">
+        <label for="mealHunger">Hunger before</label>
+        <input type="range" id="mealHunger" min="1" max="5" value="3">
+        <label for="mealFull">Fullness after</label>
+        <input type="range" id="mealFull" min="1" max="5" value="3">
+      </div>
+      <label class="block-label" for="mealNote">Notes</label>
+      <input type="text" id="mealNote" class="wide" placeholder="Who made it, where it came from, how it felt">
+      <div class="actions">
+        <button id="addMealBtn" class="primary">Add meal</button>
+        <span id="mealStatus" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Meals on this day</h2>
+      <ul class="meal-list" id="mealList"></ul>
+      <p id="mealEmpty" class="muted">No meals logged for this day.</p>
+    </div>
+  </section>
+
+  <!-- Meditation timer -->
+  <section id="view-sit" class="view">
+    <div class="card center">
+      <div class="breath-wrap">
+        <div class="breath-circle" id="breathCircle"></div>
+        <div class="breath-text" id="breathText">Ready</div>
+      </div>
+      <div class="timer" id="timerDisplay">20:00</div>
+
+      <div class="field-row centered">
+        <label for="sitLength">Minutes</label>
+        <input type="number" id="sitLength" min="1" max="180" value="20">
+        <label for="sitInterval">Interval bell</label>
+        <select id="sitInterval">
+          <option value="0">None</option>
+          <option value="5">Every 5 min</option>
+          <option value="10">Every 10 min</option>
+          <option value="15">Every 15 min</option>
+        </select>
+      </div>
+      <div class="field-row centered">
+        <label for="breathPace">Breath guide</label>
+        <select id="breathPace">
+          <option value="0">Off</option>
+          <option value="4">4s in / 4s out</option>
+          <option value="5" selected>5s in / 5s out</option>
+          <option value="6">6s in / 6s out</option>
+        </select>
+        <label><input type="checkbox" id="sitWalking"> Walking session</label>
+      </div>
+
+      <div class="actions centered">
+        <button id="sitStartBtn" class="primary">Begin</button>
+        <button id="sitStopBtn" disabled>End early</button>
+      </div>
+      <p id="sitStatus" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <h2>Sessions on this day</h2>
+      <ul class="session-list" id="sessionList"></ul>
+      <p id="sessionEmpty" class="muted">No sessions yet.</p>
+    </div>
+  </section>
+
+  <!-- Mindfulness bell -->
+  <section id="view-bell" class="view">
+    <div class="card center">
+      <button id="bellNowBtn" class="bell-btn" aria-label="Sound the bell now">
+        <span class="bell-icon" aria-hidden="true"></span>
+      </button>
+      <p class="invitation" id="bellInvitation">Tap to sound the bell.</p>
+    </div>
+
+    <div class="card">
+      <h2>Bell through the day</h2>
+      <p class="muted">The bell sounds at random-ish moments around your chosen interval while this page is open. Keep the tab open (it can be in the background) and your sound on.</p>
+      <div class="field-row">
+        <label for="bellEvery">Every about</label>
+        <select id="bellEvery">
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">60 minutes</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label for="bellFrom">Between</label>
+        <input type="time" id="bellFrom" value="08:00">
+        <span class="muted">and</span>
+        <input type="time" id="bellTo" value="20:00">
+      </div>
+      <div class="field-row">
+        <label for="bellVolume">Volume</label>
+        <input type="range" id="bellVolume" min="0" max="1" step="0.05" value="0.6">
+      </div>
+      <div class="actions">
+        <button id="bellToggleBtn" class="primary">Start bell</button>
+        <span id="bellStatus" class="muted"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calendar -->
+  <section id="view-calendar" class="view">
+    <div class="card">
+      <h2 id="calTitle">November</h2>
+      <div class="cal-grid cal-head">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <p class="muted legend">
+        <span class="dot dot-diary"></span> diary
+        <span class="dot dot-meal"></span> meals
+        <span class="dot dot-sit"></span> meditation
+        &nbsp;🌑 new moon &nbsp;🌕 full moon (approximate)
+      </p>
+    </div>
+    <div class="card" id="calDetail"></div>
+  </section>
+
+  <!-- Month summary, export, settings -->
+  <section id="view-month" class="view">
+    <div class="card">
+      <h2>The month so far</h2>
+      <div class="stat-grid" id="statGrid"></div>
+      <h3>Practices</h3>
+      <div id="practiceStats" class="practice-stats"></div>
+    </div>
+
+    <div class="card">
+      <div class="actions spread">
+        <h2 class="no-margin">Diary</h2>
+        <button id="exportDiaryBtn">Download diary (.md)</button>
+      </div>
+      <pre id="diaryPreview" class="journal-preview"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Settings</h2>
+      <div class="field-row">
+        <label for="yearInput">November of</label>
+        <input type="number" id="yearInput" min="2000" max="2100" step="1">
+        <button id="saveYearBtn">Save</button>
+      </div>
+      <h3>Backup</h3>
+      <p class="muted">Everything is stored only in this browser. Export a backup now and then.</p>
+      <div class="actions">
+        <button id="exportDataBtn">Export data (.json)</button>
+        <label class="file-btn">
+          Import data (.json)
+          <input type="file" id="importDataInput" accept="application/json" hidden>
+        </label>
+      </div>
+      <p id="backupStatus" class="muted"></p>
+      <h3>Danger zone</h3>
+      <button id="clearDataBtn" class="danger">Clear all data</button>
+    </div>
+
+    <p class="muted disclaimer">
+      An independent, personal practice tool inspired by the everyday teachings of
+      Thich Nhat Hanh. Not affiliated with or endorsed by Plum Village or any
+      associated organization. Practice text is original to this app; linked
+      sutta translations are by Bhikkhu Sujato (public domain, via SuttaCentral).
+    </p>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

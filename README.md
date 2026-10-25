@@ -39,3 +39,9 @@ then visit `http://localhost:8000`.
 5. **Settings → Backup** — export all data to a JSON file for safekeeping,
    or import a previous export. Data lives only in this browser, so back it
    up if you clear site data or switch devices/browsers.
+
+## Also in this repo
+
+[`nhat-hanh-november/`](nhat-hanh-november/) — a 30-day November practice
+companion with a diary, calendar, meal tracker, mindfulness bell and
+meditation timer. See its README.
