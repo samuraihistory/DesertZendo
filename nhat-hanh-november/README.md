@@ -42,8 +42,10 @@ directly also works.
 
 ## Your data
 
-Data lives only in this browser's `localStorage`. Use **Month → Export data**
-to back it up.
+Everything is saved in the browser's `localStorage` as you go. When the app
+is opened as a claude.ai Artifact, it is also saved to your claude.ai
+account (a private per-person store on the page), so it follows you between
+devices. Use **Month → Export data** for a backup file either way.
 
 ## Updating the readings
 

@@ -81,15 +81,42 @@
     return new Date().getFullYear();
   }
 
-  function loadSettings() {
-    const raw = localStorage.getItem(STORAGE.settings);
+  // Everything is saved to this browser's localStorage right away, so the
+  // page works offline and when opened as a plain file. When the page runs
+  // as a claude.ai Artifact, each record is also saved to the viewer's
+  // private `db` subtree, which is the copy that wins across devices.
+  function readLocal(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeLocal(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      // Storage blocked or full; the account copy (if any) still saves.
+    }
+  }
+
+  function removeLocal(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      // Nothing to remove.
+    }
+  }
+
+  function withDefaults(saved) {
     const base = {
       year: defaultYear(),
       bell: { every: 30, from: "08:00", to: "20:00", volume: 0.6 },
       cardsOpen: { readingCard: true, zenCard: true },
     };
-    if (!raw) return base;
-    const saved = JSON.parse(raw);
+    if (!saved) return base;
     return {
       ...base,
       ...saved,
@@ -98,17 +125,108 @@
     };
   }
 
+  function loadSettings() {
+    return withDefaults(readLocal(STORAGE.settings));
+  }
+
   function saveSettings() {
-    localStorage.setItem(STORAGE.settings, JSON.stringify(settings));
+    writeLocal(STORAGE.settings, settings);
+    writeRemote("settings", settings);
   }
 
   function loadDays() {
-    const raw = localStorage.getItem(STORAGE.days);
-    return raw ? JSON.parse(raw) : {};
+    return readLocal(STORAGE.days) || {};
   }
 
-  function saveDays() {
-    localStorage.setItem(STORAGE.days, JSON.stringify(days));
+  function saveDay(iso) {
+    writeLocal(STORAGE.days, days);
+    if (!remote) unsyncedDays.add(iso);
+    writeRemote("day-" + iso, days[iso] || null);
+  }
+
+  // ---------- Account sync (claude.ai Artifact only) ----------
+  let remote = null; // the viewer's private collection, once connected
+  const unsyncedDays = new Set(); // days edited before the account answered
+  const remoteWrites = {}; // doc id -> { running, next }
+
+  function setSyncStatus(text) {
+    document.getElementById("syncStatus").textContent = text;
+  }
+
+  // One write at a time per document; a newer body replaces a queued one.
+  // A null body deletes the document.
+  function writeRemote(docId, body) {
+    if (!remote) return;
+    const slot = remoteWrites[docId] || (remoteWrites[docId] = { running: false, next: undefined });
+    slot.next = body === null ? null : JSON.parse(JSON.stringify(body));
+    if (!slot.running) flushRemote(docId, slot);
+  }
+
+  async function flushRemote(docId, slot) {
+    slot.running = true;
+    while (slot.next !== undefined) {
+      const body = slot.next;
+      slot.next = undefined;
+      try {
+        const ref = remote.doc(docId);
+        await (body === null ? ref.delete() : ref.set(body));
+        setSyncStatus("Saved to your claude.ai account.");
+      } catch (err) {
+        setSyncStatus(
+          err && err.code === "quota_exceeded"
+            ? "Your account storage for this page is full. Changes are saved in this browser only."
+            : "Couldn't reach your account. Changes are saved in this browser and will sync on your next edit."
+        );
+      }
+    }
+    slot.running = false;
+  }
+
+  async function connectRemote() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const userId = user ? await user.id() : null;
+    if (!db || !userId) {
+      setSyncStatus("Sign in to claude.ai to save across devices. For now, changes are saved in this browser only.");
+      return;
+    }
+    const collection = db.collection("data/users/" + userId);
+    let snap;
+    try {
+      snap = await collection.limit(1000).get();
+    } catch (err) {
+      setSyncStatus("Couldn't reach your account. Changes are saved in this browser only.");
+      return;
+    }
+    flushTodayForm();
+    remote = collection;
+
+    if (snap.empty) {
+      // First visit with an account: upload what this browser already has.
+      writeRemote("settings", settings);
+      Object.keys(days).forEach((iso) => writeRemote("day-" + iso, days[iso]));
+      setSyncStatus("Saved to your claude.ai account.");
+      return;
+    }
+
+    const accountDays = {};
+    let accountSettings = null;
+    snap.docs.forEach((doc) => {
+      if (doc.id === "settings") accountSettings = doc.data();
+      else if (doc.id.startsWith("day-")) accountDays[doc.id.slice(4)] = doc.data();
+    });
+    // The account copy wins, except for days edited while it was loading.
+    unsyncedDays.forEach((iso) => {
+      if (days[iso]) accountDays[iso] = days[iso];
+      writeRemote("day-" + iso, days[iso] || null);
+    });
+    unsyncedDays.clear();
+    days = JSON.parse(JSON.stringify(accountDays));
+    if (accountSettings) settings = withDefaults(JSON.parse(JSON.stringify(accountSettings)));
+    writeLocal(STORAGE.days, days);
+    writeLocal(STORAGE.settings, settings);
+    setSyncStatus("Saved to your claude.ai account.");
+    refreshAll();
   }
 
   function emptyDayRecord() {
@@ -136,7 +254,7 @@
     const rec = getDay(iso);
     fn(rec);
     days[iso] = rec;
-    saveDays();
+    saveDay(iso);
   }
 
   function wasPracticed(rec) {
@@ -295,10 +413,16 @@
     renderZen(n);
   }
 
-  ["readingCard", "zenCard"].forEach((id) => {
+  const CARD_IDS = ["readingCard", "zenCard"];
+
+  function applyCardsOpen() {
+    CARD_IDS.forEach((id) => (document.getElementById(id).open = settings.cardsOpen[id]));
+  }
+
+  CARD_IDS.forEach((id) => {
     const card = document.getElementById(id);
-    card.open = settings.cardsOpen[id];
     card.addEventListener("toggle", () => {
+      if (settings.cardsOpen[id] === card.open) return;
       settings.cardsOpen[id] = card.open;
       saveSettings();
     });
@@ -882,7 +1006,21 @@
     return out;
   }
 
-  function downloadFile(filename, content, mime) {
+  // On claude.ai the page can't start downloads itself; the `downloads`
+  // capability asks the viewer to save the file instead.
+  async function downloadFile(filename, content, mime) {
+    const downloads =
+      window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
+    if (downloads) {
+      try {
+        await downloads.save({ filename, data: content });
+      } catch (err) {
+        if (err && err.code !== "declined") {
+          document.getElementById("backupStatus").textContent = "Couldn't save the file here.";
+        }
+      }
+      return;
+    }
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -922,15 +1060,10 @@
     reader.onload = () => {
       try {
         const payload = JSON.parse(reader.result);
-        if (payload.settings) settings = { ...loadSettings(), ...payload.settings };
-        if (payload.days) days = payload.days;
+        if (payload.settings) settings = withDefaults(payload.settings);
+        if (payload.days) replaceAllDays(payload.days);
         saveSettings();
-        saveDays();
-        loadBellForm();
-        selected = clampToNovember(todayISO());
-        renderHeader();
-        renderDateBar();
-        renderMonth();
+        refreshAll();
         document.getElementById("backupStatus").textContent = "Import successful.";
       } catch (err) {
         document.getElementById("backupStatus").textContent = "Import failed: invalid file.";
@@ -940,23 +1073,54 @@
     reader.readAsText(file);
   });
 
-  document.getElementById("clearDataBtn").addEventListener("click", () => {
-    if (!confirm("This will permanently delete your diary, meals, sessions and settings. Continue?")) return;
-    localStorage.removeItem(STORAGE.settings);
-    localStorage.removeItem(STORAGE.days);
-    settings = loadSettings();
-    days = {};
-    loadBellForm();
-    selected = clampToNovember(todayISO());
-    renderHeader();
-    renderDateBar();
-    renderMonth();
+  function replaceAllDays(newDays) {
+    Object.keys(days).forEach((iso) => {
+      if (!newDays[iso]) writeRemote("day-" + iso, null);
+    });
+    days = newDays;
+    writeLocal(STORAGE.days, days);
+    Object.keys(days).forEach((iso) => writeRemote("day-" + iso, days[iso]));
+  }
+
+  // Dialogs don't show inside claude.ai, so deleting takes a second tap.
+  const clearDataBtn = document.getElementById("clearDataBtn");
+  let clearArmed = null;
+  clearDataBtn.addEventListener("click", () => {
+    if (!clearArmed) {
+      clearDataBtn.textContent = "Tap again to delete everything";
+      clearArmed = setTimeout(() => {
+        clearArmed = null;
+        clearDataBtn.textContent = "Clear all data";
+      }, 5000);
+      return;
+    }
+    clearTimeout(clearArmed);
+    clearArmed = null;
+    clearDataBtn.textContent = "Clear all data";
+    replaceAllDays({});
+    writeRemote("settings", null);
+    removeLocal(STORAGE.settings);
+    removeLocal(STORAGE.days);
+    settings = withDefaults(null);
+    refreshAll();
+    document.getElementById("backupStatus").textContent = "All data deleted.";
   });
 
+  function refreshAll() {
+    loadBellForm();
+    applyCardsOpen();
+    selected = clampToNovember(selected);
+    renderHeader();
+    renderDateBar();
+    renderActive();
+  }
+
   // ---------- Init ----------
+  applyCardsOpen();
   loadBellForm();
   showIdleTimer();
   renderHeader();
   renderDateBar();
   renderToday();
+  connectRemote();
 })();
