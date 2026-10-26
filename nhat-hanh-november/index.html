@@ -4,17 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nhat Hanh November</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="app-header">
-  <div class="header-top">
-    <h1>Nhat Hanh November</h1>
-    <p class="subtitle">Thirty days of mindful living</p>
+  <div class="month-mark">
+    <canvas id="monthEnso" data-enso data-size="104" data-seed="1126" data-progress="0" aria-hidden="true"></canvas>
+    <span class="month-day" id="monthDay" aria-hidden="true"></span>
   </div>
-  <div class="day-counter">
-    <span id="dayLabel">Day — of 30</span>
-    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="header-text">
+    <div class="title-row">
+      <h1>Nhat Hanh November</h1>
+      <canvas class="seal" data-seal="息" data-size="30" role="img" aria-label="Seal: breath"></canvas>
+    </div>
+    <p class="subtitle">Thirty days of mindful living</p>
+    <p class="day-label" id="dayLabel">Day — of 30</p>
   </div>
 </header>
 
@@ -57,10 +64,14 @@
 
     <details class="card zen-card" id="zenCard" open>
       <summary><span class="eyebrow">Zen word</span></summary>
-      <p class="zen-original" id="zenOriginal"></p>
-      <p class="zen-reading muted" id="zenReading"></p>
-      <p class="zen-english" id="zenEnglish"></p>
-      <p class="muted" id="zenCite"></p>
+      <div class="zen-body">
+        <p class="zen-original" id="zenOriginal"></p>
+        <div class="zen-text">
+          <p class="zen-reading muted" id="zenReading"></p>
+          <p class="zen-english" id="zenEnglish"></p>
+          <p class="muted zen-cite" id="zenCite"></p>
+        </div>
+      </div>
     </details>
 
     <div class="card">
@@ -132,7 +143,7 @@
   <section id="view-sit" class="view">
     <div class="card center">
       <div class="breath-wrap">
-        <div class="breath-circle" id="breathCircle"></div>
+        <canvas class="breath-circle" id="breathCircle" data-enso data-size="210" data-seed="5" data-weight="0.09" aria-hidden="true"></canvas>
         <div class="breath-text" id="breathText">Ready</div>
       </div>
       <div class="timer" id="timerDisplay">20:00</div>
@@ -177,7 +188,9 @@
   <section id="view-bell" class="view">
     <div class="card center">
       <button id="bellNowBtn" class="bell-btn" aria-label="Sound the bell now">
-        <span class="bell-icon" aria-hidden="true"></span>
+        <canvas data-enso data-size="170" data-seed="23" aria-hidden="true"></canvas>
+        <span class="bell-ring" id="bellRing" aria-hidden="true"></span>
+        <span class="bell-label">Bell</span>
       </button>
       <p class="invitation" id="bellInvitation">Tap to sound the bell.</p>
     </div>
@@ -223,7 +236,8 @@
         <span class="dot dot-diary"></span> diary
         <span class="dot dot-meal"></span> meals
         <span class="dot dot-sit"></span> meditation
-        &nbsp;🌑 new moon &nbsp;🌕 full moon (approximate)
+        <span class="moon moon-new"></span> new moon
+        <span class="moon moon-full"></span> full moon (approximate)
       </p>
     </div>
     <div class="card" id="calDetail"></div>
@@ -278,6 +292,7 @@
   </section>
 </main>
 
+<script src="ink.js"></script>
 <script src="data.js"></script>
 <script src="readings.js"></script>
 <script src="zen.js"></script>

@@ -324,7 +324,11 @@
       filled = DAYS_IN_NOVEMBER;
     }
     document.getElementById("dayLabel").textContent = label;
-    document.getElementById("progressFill").style.width = (filled / DAYS_IN_NOVEMBER) * 100 + "%";
+    // The month's ensō is brushed a little further each day.
+    const enso = document.getElementById("monthEnso");
+    enso.dataset.progress = String(filled / DAYS_IN_NOVEMBER);
+    window.Ink.redraw(enso);
+    document.getElementById("monthDay").textContent = n ? String(n) : filled ? "30" : "";
   }
 
   function renderDateBar() {
@@ -446,8 +450,11 @@
   function renderZen(n) {
     const zen = window.NHN_ZEN[n - 1];
     const original = document.getElementById("zenOriginal");
-    original.textContent = zen.original;
     original.lang = zen.lang;
+    // Short sayings hang in vertical columns, one phrase each, as on a scroll.
+    const vertical = [...zen.original].length <= 18;
+    original.classList.toggle("vertical", vertical);
+    original.textContent = vertical ? zen.original.replace(/([，。、])\s*(?=.)/g, "$1\n").replace(/　/g, "\n") : zen.original;
     const reading = document.getElementById("zenReading");
     reading.textContent = zen.reading || "";
     reading.hidden = !zen.reading;
@@ -642,6 +649,11 @@
   function showInvitation() {
     bellInvitation.textContent = BELL_INVITATIONS[invitationIndex % BELL_INVITATIONS.length];
     invitationIndex++;
+    // Restart the ink ring that spreads out from the bell.
+    const ring = document.getElementById("bellRing");
+    ring.classList.remove("ringing");
+    void ring.offsetWidth;
+    ring.classList.add("ringing");
   }
 
   function loadBellForm() {
@@ -860,7 +872,7 @@
       if (rec && rec.meals && rec.meals.length) dots.push('<span class="dot dot-meal"></span>');
       if (rec && rec.sitMinutes > 0) dots.push('<span class="dot dot-sit"></span>');
       cell.innerHTML = `
-        <span class="cal-num">${day}${moon === "new" ? " 🌑" : moon === "full" ? " 🌕" : ""}</span>
+        <span class="cal-num">${day}${moon ? `<span class="moon moon-${moon}" title="${moon} moon"></span>` : ""}</span>
         ${day === thanksgiving ? '<span class="cal-tag">Thanksgiving</span>' : ""}
         <span class="cal-dots">${dots.join("")}</span>
       `;
