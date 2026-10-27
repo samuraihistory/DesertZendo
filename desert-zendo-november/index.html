@@ -6,7 +6,7 @@
 <title>Desert Zendo November</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500&family=Noto+Serif+Tibetan&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,6 +29,7 @@
   <button class="tab-btn active" data-view="today">Today</button>
   <button class="tab-btn" data-view="meals">Meals</button>
   <button class="tab-btn" data-view="sit">Sit</button>
+  <button class="tab-btn" data-view="recite">Recite</button>
   <button class="tab-btn" data-view="bell">Bell</button>
   <button class="tab-btn" data-view="calendar">Calendar</button>
   <button class="tab-btn" data-view="month">Month</button>
@@ -48,6 +49,7 @@
       <p class="eyebrow" id="themeEyebrow">Day 1</p>
       <h2 id="themeTitle"></h2>
       <p id="themePractice"></p>
+      <p class="observance-note" id="observanceNote" hidden></p>
     </div>
 
     <details class="card reading-card" id="readingCard" open>
@@ -147,6 +149,7 @@
         <div class="breath-text" id="breathText">Ready</div>
       </div>
       <div class="timer" id="timerDisplay">20:00</div>
+      <p class="segment-label" id="segmentLabel"></p>
 
       <div class="field-row centered">
         <label for="sitStyle">Bells</label>
@@ -156,8 +159,26 @@
         </select>
       </div>
       <div class="field-row centered">
-        <label for="sitLength">Minutes</label>
+        <label for="sitLength">Minutes per period</label>
         <input type="number" id="sitLength" min="1" max="180" value="20">
+      </div>
+      <div class="field-row centered">
+        <label for="sitRounds">Periods</label>
+        <select id="sitRounds">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+        <label for="kinhinLength">Kinhin between</label>
+        <select id="kinhinLength">
+          <option value="5">5 min</option>
+          <option value="7">7 min</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+        </select>
+      </div>
+      <div class="field-row centered">
         <label for="sitInterval">Interval bell</label>
         <select id="sitInterval">
           <option value="0">None</option>
@@ -188,6 +209,37 @@
       <h2>Sessions on this day</h2>
       <ul class="session-list" id="sessionList"></ul>
       <p id="sessionEmpty" class="muted">No sessions yet.</p>
+    </div>
+  </section>
+
+  <!-- Nembutsu / mantra counter -->
+  <section id="view-recite" class="view">
+    <div class="card center">
+      <div class="field-row centered">
+        <label for="reciteText">Recitation</label>
+        <select id="reciteText"></select>
+      </div>
+      <p class="recite-original" id="reciteOriginal"></p>
+      <p class="recite-reading" id="reciteReading"></p>
+      <button id="reciteBtn" class="recite-btn" aria-label="Count one recitation">
+        <canvas id="reciteEnso" data-enso data-size="200" data-seed="108" data-progress="0" aria-hidden="true"></canvas>
+        <span class="recite-count" id="reciteCount">0</span>
+      </button>
+      <p class="muted" id="reciteRound"></p>
+      <div class="checklist-inline centered-row">
+        <label><input type="checkbox" id="reciteSound"> Wooden fish sound</label>
+        <label><input type="checkbox" id="reciteHide"> Hide the count</label>
+      </div>
+      <div class="actions centered">
+        <button id="reciteUndoBtn">Undo last</button>
+      </div>
+      <p class="muted recite-note" id="reciteNote"></p>
+    </div>
+
+    <div class="card">
+      <h2>Recited on this day</h2>
+      <ul class="session-list" id="reciteList"></ul>
+      <p id="reciteEmpty" class="muted">Nothing recited yet.</p>
     </div>
   </section>
 
@@ -243,6 +295,7 @@
         <span class="dot dot-diary"></span> diary
         <span class="dot dot-meal"></span> meals
         <span class="dot dot-sit"></span> meditation
+        <span class="obs-mark"></span> observance
         <span class="moon moon-new"></span> new moon
         <span class="moon moon-full"></span> full moon (approximate)
       </p>

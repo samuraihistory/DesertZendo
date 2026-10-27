@@ -35,13 +35,20 @@ directly also works.
 - **Meals**: log each meal with hunger and fullness, plus plant-based,
   paused-before-eating, no-screens, and ate-slowly flags.
 - **Sit**: meditation timer with zendo-style bells (three to begin, one to
-  end) or a simpler one-and-two pattern, optional interval bells, an
-  optional breathing guide, and a walking-session mode. Finished sessions
-  are logged automatically.
+  end) or a simpler one-and-two pattern. Sit several periods with kinhin
+  between them: two bells start kinhin and one calls you back to sitting.
+  Optional interval bells, a breathing guide, and a walking-session mode.
+  Zazen and kinhin are logged separately.
+- **Recite**: a nembutsu and mantra counter (Namu Amida Butsu, Namo
+  Amituofo, Om Mani Padme Hum, or your own). Tap once per recitation; the
+  ensō fills around once per mala round of 108 and a bell marks each round.
+  A wooden-fish knock is optional, and the count can be hidden.
 - **Bell**: a bell you can sound on demand, or set to ring at varied
   intervals during your chosen hours while the page is open.
 - **Calendar**: the month at a glance, showing which days have diary, meals
-  and meditation, new and full moon days, and US Thanksgiving.
+  and meditation, new and full moon days, Hōonkō (November 21–28, the
+  Ōtani-ha dates) and US Thanksgiving. On Hōonkō days the Today view
+  explains the observance.
 - **Month**: totals, streaks, practice completion, diary export (`.md`),
   JSON backup and restore, and the year setting.
 

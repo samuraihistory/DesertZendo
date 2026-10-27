@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const { THEMES, PRACTICES, MOODS, MEAL_TYPES, BELL_INVITATIONS } = window.NHN_DATA;
+  const { THEMES, PRACTICES, MOODS, MEAL_TYPES, BELL_INVITATIONS, RECITATIONS, HOONKO_NOTE } = window.NHN_DATA;
 
   const STORAGE = {
     settings: "nhnSettings",
@@ -55,6 +55,17 @@
     const firstDow = new Date(year, NOVEMBER, 1).getDay();
     const firstThu = 1 + ((4 - firstDow + 7) % 7);
     return firstThu + 21;
+  }
+
+  // Observances marked on the calendar. Hōonkō follows the Ōtani-ha dates,
+  // November 21–28, ending on Shinran's memorial day.
+  function observances(year, day) {
+    const out = [];
+    if (day >= 21 && day <= 28) {
+      out.push({ short: "Hōonkō", name: day === 28 ? "Hōonkō: Shinran’s memorial day" : "Hōonkō (November 21–28)" });
+    }
+    if (day === thanksgivingDay(year)) out.push({ short: "Thanksgiving", name: "Thanksgiving (US)" });
+    return out;
   }
 
   // Approximate moon phase from the mean synodic month, anchored to the new
@@ -116,6 +127,9 @@
       bell: { every: 30, from: "08:00", to: "20:00", volume: 0.6 },
       cardsOpen: { readingCard: true, zenCard: true },
       sitStyle: "zendo",
+      sitRounds: 1,
+      kinhinMinutes: 5,
+      recite: { id: "namu-amida-butsu", sound: true, hideCount: false },
     };
     if (!saved) return base;
     return {
@@ -123,6 +137,7 @@
       ...saved,
       bell: { ...base.bell, ...(saved.bell || {}) },
       cardsOpen: { ...base.cardsOpen, ...(saved.cardsOpen || {}) },
+      recite: { ...base.recite, ...(saved.recite || {}) },
     };
   }
 
@@ -243,6 +258,7 @@
       meals: [],
       sessions: [],
       bells: 0,
+      recitations: {},
     };
   }
 
@@ -262,6 +278,7 @@
     if (!rec) return false;
     if (rec.sitMinutes > 0 || (rec.meals && rec.meals.length)) return true;
     if (rec.diary && rec.diary.trim()) return true;
+    if (rec.recitations && Object.values(rec.recitations).some((n) => n > 0)) return true;
     return PRACTICES.some((p) => rec.practices && rec.practices[p.id]);
   }
 
@@ -300,6 +317,7 @@
     if (activeView === "today") renderToday();
     if (activeView === "meals") renderMeals();
     if (activeView === "sit") renderSessions();
+    if (activeView === "recite") renderRecite();
     if (activeView === "calendar") renderCalendar();
     if (activeView === "month") renderMonth();
   }
@@ -410,7 +428,15 @@
   function renderTheme() {
     const n = novDay(selected);
     const theme = THEMES[n - 1];
-    document.getElementById("themeEyebrow").textContent = `Day ${n} · ${parseISO(selected).toLocaleDateString(undefined, { month: "long", day: "numeric" })}`;
+    const obs = observances(settings.year, n);
+    document.getElementById("themeEyebrow").textContent = [
+      `Day ${n}`,
+      parseISO(selected).toLocaleDateString(undefined, { month: "long", day: "numeric" }),
+      ...obs.map((o) => o.short),
+    ].join(" · ");
+    const note = document.getElementById("observanceNote");
+    note.hidden = !obs.some((o) => o.short === "Hōonkō");
+    note.textContent = HOONKO_NOTE;
     document.getElementById("themeTitle").textContent = theme.title;
     document.getElementById("themePractice").textContent = theme.practice;
     document.getElementById("diaryPrompt").textContent = theme.prompt;
@@ -727,7 +753,10 @@
 
   // ---------- Meditation timer ----------
   const timerDisplay = document.getElementById("timerDisplay");
+  const segmentLabel = document.getElementById("segmentLabel");
   const sitLength = document.getElementById("sitLength");
+  const sitRounds = document.getElementById("sitRounds");
+  const kinhinLength = document.getElementById("kinhinLength");
   const sitInterval = document.getElementById("sitInterval");
   const breathPace = document.getElementById("breathPace");
   const sitWalking = document.getElementById("sitWalking");
@@ -739,28 +768,69 @@
   const sitStyle = document.getElementById("sitStyle");
 
   // Zendo style: three bells, each left to fade, open the sitting and the
-  // clock starts on the third; a single bell closes it.
+  // clock starts on the third; a single bell closes it. Between periods,
+  // two bells start kinhin and one bell calls everyone back to the cushion.
   const OPENING_BELL_SPACING = 5; // seconds
+  const KINHIN_BELL_SPACING = 3; // seconds
   const SIT_STYLES = {
     zendo: { opening: 3, closing: 1 },
     simple: { opening: 1, closing: 2 },
   };
 
-  sitStyle.value = settings.sitStyle;
+  function loadSitForm() {
+    sitStyle.value = settings.sitStyle;
+    sitRounds.value = String(settings.sitRounds);
+    kinhinLength.value = String(settings.kinhinMinutes);
+  }
+
   sitStyle.addEventListener("change", () => {
     settings.sitStyle = sitStyle.value;
     saveSettings();
   });
+  sitRounds.addEventListener("change", () => {
+    settings.sitRounds = Number(sitRounds.value);
+    saveSettings();
+    if (!sit) showIdleTimer();
+  });
+  kinhinLength.addEventListener("change", () => {
+    settings.kinhinMinutes = Number(kinhinLength.value);
+    saveSettings();
+    if (!sit) showIdleTimer();
+  });
+  sitWalking.addEventListener("change", () => !sit && showIdleTimer());
 
-  let sit = null; // { start, end, interval, nextInterval, tick, breath, wakeLock, ... }
+  let sit = null; // the session in progress; see the Begin handler
 
   function formatClock(ms) {
     const total = Math.max(0, Math.ceil(ms / 1000));
     return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
   }
 
+  // A session is a list of segments: zazen periods with kinhin between, or
+  // a single walking segment.
+  function buildSegments() {
+    const minutes = Number(sitLength.value) || 0;
+    if (sitWalking.checked) return [{ type: "walking", ms: minutes * 60000 }];
+    const rounds = Number(sitRounds.value) || 1;
+    const out = [];
+    for (let i = 0; i < rounds; i++) {
+      if (i) out.push({ type: "kinhin", ms: Number(kinhinLength.value) * 60000 });
+      out.push({ type: "zazen", ms: minutes * 60000 });
+    }
+    return out;
+  }
+
+  function describePlan() {
+    const minutes = Number(sitLength.value) || 0;
+    if (sitWalking.checked) return `${minutes} min walking meditation`;
+    const rounds = Number(sitRounds.value) || 1;
+    if (rounds === 1) return `${minutes} min zazen`;
+    return `${rounds} × ${minutes} min zazen, ${kinhinLength.value} min kinhin between`;
+  }
+
   function showIdleTimer() {
     timerDisplay.textContent = formatClock((Number(sitLength.value) || 0) * 60000);
+    segmentLabel.textContent = describePlan();
   }
   sitLength.addEventListener("input", () => !sit && showIdleTimer());
 
@@ -789,35 +859,75 @@
     return null;
   }
 
+  // Ring bells for the session, remembering when each will sound so that
+  // ending early can silence the ones still to come.
+  function ringSessionBells(count, spacingSec) {
+    const now = Date.now();
+    strikeBells(count, spacingSec).forEach((node, i) => {
+      if (node) sit.pendingBells.push({ node, at: now + i * spacingSec * 1000 });
+    });
+  }
+
   sitStartBtn.addEventListener("click", async () => {
-    const minutes = Number(sitLength.value) || 0;
-    if (minutes <= 0) return;
+    const segments = buildSegments();
+    if (!segments[0].ms) return;
     ensureAudio();
     const style = SIT_STYLES[sitStyle.value] || SIT_STYLES.zendo;
-    const openingBells = strikeBells(style.opening, OPENING_BELL_SPACING);
     const start = Date.now() + (style.opening - 1) * OPENING_BELL_SPACING * 1000;
-    const interval = Number(sitInterval.value) * 60000;
+    let t = start;
+    segments.forEach((seg) => {
+      seg.start = t;
+      seg.end = t + seg.ms;
+      t = seg.end;
+    });
     sit = {
       start,
-      end: start + minutes * 60000,
-      interval,
-      nextInterval: interval ? start + interval : Infinity,
-      walking: sitWalking.checked,
+      end: t,
+      segments,
+      segIndex: -1,
+      interval: Number(sitInterval.value) * 60000,
+      nextInterval: Infinity,
       closingBells: style.closing,
-      openingBells,
       openingCount: style.opening,
       breathPace: Number(breathPace.value),
       breath: null,
+      pendingBells: [],
     };
+    ringSessionBells(style.opening, OPENING_BELL_SPACING);
     sit.tick = setInterval(onSitTick, 250);
-    sit.wakeLock = await requestWakeLock();
     sitStartBtn.disabled = true;
     sitStopBtn.disabled = false;
     sitStatus.textContent = "";
     onSitTick();
+    const wakeLock = await requestWakeLock();
+    if (sit) sit.wakeLock = wakeLock;
+    else if (wakeLock) wakeLock.release().catch(() => {});
   });
 
   sitStopBtn.addEventListener("click", () => finishSit(true));
+
+  function enterSegment(index) {
+    const first = sit.segIndex === -1;
+    sit.segIndex = index;
+    const seg = sit.segments[index];
+    if (!first) ringSessionBells(seg.type === "kinhin" ? 2 : 1, KINHIN_BELL_SPACING);
+    clearInterval(sit.breath);
+    sit.breath = null;
+    breathCircle.classList.remove("expanded");
+    sit.nextInterval = seg.type === "zazen" && sit.interval ? seg.start + sit.interval : Infinity;
+    if (seg.type === "zazen") {
+      sit.breath = startBreathGuide(sit.breathPace);
+      const zazenCount = sit.segments.filter((s) => s.type === "zazen").length;
+      const number = sit.segments.slice(0, index + 1).filter((s) => s.type === "zazen").length;
+      segmentLabel.textContent = zazenCount > 1 ? `Zazen, period ${number} of ${zazenCount}` : "Zazen";
+    } else if (seg.type === "kinhin") {
+      breathText.textContent = "Kinhin";
+      segmentLabel.textContent = "Kinhin: stand, bow, and walk slowly until the bell";
+    } else {
+      breathText.textContent = "Walking";
+      segmentLabel.textContent = "Walking meditation";
+    }
+  }
 
   function onSitTick() {
     const now = Date.now();
@@ -826,30 +936,42 @@
       const elapsed = (sit.openingCount - 1) * OPENING_BELL_SPACING * 1000 - (sit.start - now);
       const bell = Math.min(sit.openingCount, Math.floor(elapsed / (OPENING_BELL_SPACING * 1000)) + 1);
       breathText.textContent = `Bell ${bell} of ${sit.openingCount}`;
-      timerDisplay.textContent = formatClock(sit.end - sit.start);
+      timerDisplay.textContent = formatClock(sit.segments[0].ms);
+      segmentLabel.textContent = describePlan();
       return;
     }
-    if (sit.breath === null) sit.breath = startBreathGuide(sit.breathPace);
-    timerDisplay.textContent = formatClock(sit.end - now);
     if (now >= sit.end) {
       finishSit(false);
       return;
     }
-    if (now >= sit.nextInterval) {
+    const index = sit.segments.findIndex((seg) => now < seg.end);
+    if (index !== sit.segIndex) enterSegment(index);
+    const seg = sit.segments[index];
+    timerDisplay.textContent = formatClock(seg.end - now);
+    if (now >= sit.nextInterval && sit.nextInterval < seg.end) {
       strikeBell();
       sit.nextInterval += sit.interval;
     }
   }
 
   function finishSit(early) {
-    const minutes = Math.max(0, Math.round((Date.now() - sit.start) / 60000));
+    const now = Date.now();
+    let zazenMs = 0;
+    let walkMs = 0;
+    sit.segments.forEach((seg) => {
+      const ms = Math.max(0, Math.min(seg.end, now) - seg.start);
+      if (seg.type === "zazen") zazenMs += ms;
+      else walkMs += ms;
+    });
+    const zazen = Math.round(zazenMs / 60000);
+    const walked = Math.round(walkMs / 60000);
+    const walkKind = sit.segments.some((seg) => seg.type === "kinhin") ? "kinhin" : "walking";
     clearInterval(sit.tick);
     clearInterval(sit.breath);
-    // Silence any opening bells that haven't rung yet.
-    if (early) sit.openingBells.forEach((bell) => bell && bell.disconnect());
+    // Silence bells that haven't rung yet.
+    if (early) sit.pendingBells.forEach((bell) => bell.at > now && bell.node.disconnect());
     const closingBells = sit.closingBells;
     if (sit.wakeLock) sit.wakeLock.release().catch(() => {});
-    const walking = sit.walking;
     sit = null;
     breathCircle.classList.remove("expanded");
     breathText.textContent = "Ready";
@@ -858,18 +980,26 @@
     showIdleTimer();
     if (!early) strikeBells(closingBells);
 
-    if (minutes < 1) {
+    if (zazen + walked < 1) {
       sitStatus.textContent = "Session under a minute — not logged.";
       return;
     }
-    // Log to today when it's in November, otherwise to the selected day.
-    const iso = novDay(todayISO()) ? todayISO() : selected;
+    const iso = loggingDay();
     updateDay(iso, (rec) => {
-      rec.sessions.push({ at: nowHHMM(), minutes, walking });
-      rec.sitMinutes = (rec.sitMinutes || 0) + minutes;
-      rec.practices[walking ? "walking" : "sitting"] = true;
+      if (zazen >= 1) {
+        rec.sessions.push({ at: nowHHMM(), minutes: zazen, walking: false, kind: "zazen" });
+        rec.practices.sitting = true;
+      }
+      if (walked >= 1) {
+        rec.sessions.push({ at: nowHHMM(), minutes: walked, walking: true, kind: walkKind });
+        rec.practices.walking = true;
+      }
+      rec.sitMinutes = (rec.sitMinutes || 0) + zazen + walked;
     });
-    sitStatus.textContent = `Logged ${minutes} min to ${iso}.`;
+    const parts = [];
+    if (zazen >= 1) parts.push(`${zazen} min zazen`);
+    if (walked >= 1) parts.push(`${walked} min ${walkKind}`);
+    sitStatus.textContent = `Logged ${parts.join(" and ")} to ${iso}.`;
     renderSessions();
   }
 
@@ -880,7 +1010,140 @@
     document.getElementById("sessionEmpty").hidden = sessions.length > 0;
     sessions.forEach((s) => {
       const li = document.createElement("li");
-      li.textContent = `${s.at} — ${s.minutes} min ${s.walking ? "walking" : "sitting"}`;
+      const kind = s.kind || (s.walking ? "walking" : "sitting");
+      li.textContent = `${s.at} — ${s.minutes} min ${kind}`;
+      list.appendChild(li);
+    });
+  }
+
+  // ---------- Recitation counter ----------
+  // One tap is one recitation. The ensō fills around once per mala round of
+  // 108, and a bell marks each completed round.
+  const MALA = 108;
+  const reciteText = document.getElementById("reciteText");
+  const reciteBtn = document.getElementById("reciteBtn");
+  const reciteEnso = document.getElementById("reciteEnso");
+  const reciteCount = document.getElementById("reciteCount");
+  const reciteRound = document.getElementById("reciteRound");
+  const reciteSound = document.getElementById("reciteSound");
+  const reciteHide = document.getElementById("reciteHide");
+
+  RECITATIONS.forEach((r) => {
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.label;
+    reciteText.appendChild(opt);
+  });
+
+  function currentRecitation() {
+    return RECITATIONS.find((r) => r.id === settings.recite.id) || RECITATIONS[0];
+  }
+
+  function loadReciteForm() {
+    reciteText.value = currentRecitation().id;
+    reciteSound.checked = settings.recite.sound;
+    reciteHide.checked = settings.recite.hideCount;
+  }
+
+  function saveReciteForm() {
+    settings.recite = { id: reciteText.value, sound: reciteSound.checked, hideCount: reciteHide.checked };
+    saveSettings();
+    renderRecite();
+  }
+  [reciteText, reciteSound, reciteHide].forEach((el) => el.addEventListener("change", saveReciteForm));
+
+  // A short wooden knock, like the wooden fish (mokugyo) that keeps time
+  // for chanting.
+  function knock() {
+    const ctx = ensureAudio();
+    const volume = settings.bell.volume;
+    if (volume <= 0) return;
+    const t0 = ctx.currentTime;
+    const out = ctx.createGain();
+    out.gain.value = volume * 0.5;
+    out.connect(ctx.destination);
+    [
+      [420, 1, 0.14],
+      [930, 0.35, 0.06],
+    ].forEach(([freq, gain, decay]) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq * 1.06, t0);
+      osc.frequency.exponentialRampToValueAtTime(freq, t0 + 0.03);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + decay);
+      osc.connect(g).connect(out);
+      osc.start(t0);
+      osc.stop(t0 + decay + 0.05);
+    });
+  }
+
+  // Sitting and reciting log to today during November, otherwise to the
+  // day picked in the date bar.
+  function loggingDay() {
+    return novDay(todayISO()) ? todayISO() : selected;
+  }
+
+  function recitedCount(iso, id) {
+    return getDay(iso).recitations[id] || 0;
+  }
+
+  function changeRecitation(delta) {
+    const id = currentRecitation().id;
+    const iso = loggingDay();
+    const next = Math.max(0, recitedCount(iso, id) + delta);
+    updateDay(iso, (rec) => {
+      rec.recitations = { ...rec.recitations, [id]: next };
+      if (next > 0) rec.practices.recite = true;
+    });
+    return next;
+  }
+
+  reciteBtn.addEventListener("click", () => {
+    const count = changeRecitation(1);
+    if (count % MALA === 0) strikeBell();
+    else if (settings.recite.sound) knock();
+    renderRecite();
+  });
+
+  document.getElementById("reciteUndoBtn").addEventListener("click", () => {
+    changeRecitation(-1);
+    renderRecite();
+  });
+
+  function renderRecite() {
+    const r = currentRecitation();
+    const original = document.getElementById("reciteOriginal");
+    original.textContent = r.original;
+    original.lang = r.lang;
+    original.hidden = !r.original;
+    const reading = document.getElementById("reciteReading");
+    reading.textContent = r.reading;
+    reading.hidden = !r.reading;
+    document.getElementById("reciteNote").textContent = r.note;
+
+    const iso = loggingDay();
+    const count = recitedCount(iso, r.id);
+    const intoRound = count % MALA;
+    reciteEnso.dataset.progress = String(count && !intoRound ? 1 : intoRound / MALA);
+    window.Ink.redraw(reciteEnso);
+    const hide = settings.recite.hideCount;
+    reciteCount.textContent = hide ? "" : String(count);
+    const rounds = Math.floor(count / MALA);
+    reciteRound.textContent = hide
+      ? "Tap the circle with each recitation."
+      : `${rounds} round${rounds === 1 ? "" : "s"} of ${MALA}${intoRound ? `, ${intoRound} into the next` : ""} · ${iso}`;
+
+    const list = document.getElementById("reciteList");
+    const recs = getDay(selected).recitations;
+    list.innerHTML = "";
+    const entries = RECITATIONS.filter((x) => recs[x.id]);
+    document.getElementById("reciteEmpty").hidden = entries.length > 0;
+    entries.forEach((x) => {
+      const li = document.createElement("li");
+      li.textContent = hide ? x.label : `${x.label} — ${recs[x.id]}`;
       list.appendChild(li);
     });
   }
@@ -895,7 +1158,6 @@
     for (let i = 0; i < firstDow; i++) {
       grid.appendChild(document.createElement("span"));
     }
-    const thanksgiving = thanksgivingDay(year);
     const today = todayISO();
     for (let day = 1; day <= DAYS_IN_NOVEMBER; day++) {
       const iso = novISO(day);
@@ -909,12 +1171,14 @@
       if (rec && rec.diary && rec.diary.trim()) dots.push('<span class="dot dot-diary"></span>');
       if (rec && rec.meals && rec.meals.length) dots.push('<span class="dot dot-meal"></span>');
       if (rec && rec.sitMinutes > 0) dots.push('<span class="dot dot-sit"></span>');
+      const obs = observances(year, day);
       cell.innerHTML = `
         <span class="cal-num">${day}${moon ? `<span class="moon moon-${moon}" title="${moon} moon"></span>` : ""}</span>
-        ${day === thanksgiving ? '<span class="cal-tag">Thanksgiving</span>' : ""}
+        ${obs.length ? '<span class="obs-mark"></span>' : ""}
+        ${obs.map((o) => `<span class="cal-tag">${o.short}</span>`).join("")}
         <span class="cal-dots">${dots.join("")}</span>
       `;
-      cell.title = THEMES[day - 1].title;
+      cell.title = [THEMES[day - 1].title, ...obs.map((o) => o.name)].join(" · ");
       cell.addEventListener("click", () => {
         selected = iso;
         renderDateBar();
@@ -931,15 +1195,20 @@
     const theme = THEMES[n - 1];
     const mood = MOODS.find((m) => m.value === rec.mood);
     const done = PRACTICES.filter((p) => rec.practices[p.id]).map((p) => p.label);
+    const obs = observances(settings.year, n);
+    const recited = RECITATIONS.filter((r) => rec.recitations[r.id]).map((r) =>
+      settings.recite.hideCount ? r.reading || r.label : `${rec.recitations[r.id]} ${r.reading || r.label}`
+    );
     const detail = document.getElementById("calDetail");
     detail.innerHTML = `
-      <p class="eyebrow">Day ${n}</p>
+      <p class="eyebrow">${["Day " + n, ...obs.map((o) => o.name)].map(escapeHtml).join(" · ")}</p>
       <h2>${escapeHtml(theme.title)}</h2>
       <p class="muted">
         ${rec.sitMinutes || 0} min meditation · ${rec.meals.length} meal${rec.meals.length === 1 ? "" : "s"}
         · ${rec.bells || 0} bell${rec.bells === 1 ? "" : "s"}${mood ? " · feeling " + mood.label.toLowerCase() : ""}
       </p>
       ${done.length ? `<p>${escapeHtml(done.join(" · "))}</p>` : ""}
+      ${recited.length ? `<p>Recited: ${escapeHtml(recited.join(" · "))}</p>` : ""}
       ${rec.intention ? `<p><em>Intention:</em> ${escapeHtml(rec.intention)}</p>` : ""}
       ${rec.diary ? `<p class="diary-snip">${escapeHtml(rec.diary)}</p>` : ""}
     `;
@@ -969,6 +1238,7 @@
     let diaryDays = 0;
     let moodSum = 0;
     let moodCount = 0;
+    let recitations = 0;
     const practiceCounts = {};
     PRACTICES.forEach((p) => (practiceCounts[p.id] = 0));
 
@@ -979,6 +1249,7 @@
       plantMeals += rec.meals.filter((m) => m.plant).length;
       mindfulMeals += rec.meals.filter((m) => m.pause).length;
       if (rec.diary.trim()) diaryDays++;
+      recitations += Object.values(rec.recitations).reduce((a, b) => a + b, 0);
       if (rec.mood) {
         moodSum += rec.mood;
         moodCount++;
@@ -1014,6 +1285,7 @@
       { label: "Plant-based", num: pct(plantMeals, meals) },
       { label: "Paused before eating", num: pct(mindfulMeals, meals) },
       { label: "Usual mood", num: avgMood },
+      { label: "Recitations", num: settings.recite.hideCount ? (recitations ? "✓" : "—") : recitations },
       { label: "Current streak", num: current },
       { label: "Longest streak", num: longest },
     ];
@@ -1047,6 +1319,8 @@
       if (rec.sitMinutes) out += `Meditation: ${rec.sitMinutes} min\n`;
       const done = PRACTICES.filter((p) => rec.practices[p.id]).map((p) => p.label);
       if (done.length) out += `Practice: ${done.join(", ")}\n`;
+      const recited = RECITATIONS.filter((r) => rec.recitations[r.id]);
+      if (recited.length) out += `Recited: ${recited.map((r) => `${r.reading || r.label} (${rec.recitations[r.id]})`).join(", ")}\n`;
       if (rec.meals.length) out += `Meals: ${rec.meals.map((m) => `${m.type.toLowerCase()} (${m.what})`).join("; ")}\n`;
       if (rec.diary.trim()) out += `\n*${theme.prompt}*\n\n${rec.diary.trim()}\n`;
       if (rec.gratitude.trim()) out += `\n**Grateful for:**\n${rec.gratitude.trim()}\n`;
@@ -1158,7 +1432,9 @@
 
   function refreshAll() {
     loadBellForm();
-    sitStyle.value = settings.sitStyle;
+    loadSitForm();
+    loadReciteForm();
+    if (!sit) showIdleTimer();
     applyCardsOpen();
     selected = clampToNovember(selected);
     renderHeader();
@@ -1169,6 +1445,8 @@
   // ---------- Init ----------
   applyCardsOpen();
   loadBellForm();
+  loadSitForm();
+  loadReciteForm();
   showIdleTimer();
   renderHeader();
   renderDateBar();

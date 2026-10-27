@@ -202,7 +202,48 @@ window.NHN_DATA = (function () {
     { id: "bell", label: "Paused for the bell" },
     { id: "relax", label: "Deep relaxation" },
     { id: "theme", label: "Today's theme practice" },
+    { id: "recite", label: "Nembutsu or mantra" },
   ];
+
+  // Recitations for the Recite tab. A mala has 108 beads, so a round is 108.
+  const RECITATIONS = [
+    {
+      id: "namu-amida-butsu",
+      label: "Namu Amida Butsu (Jōdo Shinshū)",
+      original: "南無阿弥陀仏",
+      lang: "ja",
+      reading: "Namu Amida Butsu",
+      note: "In Shin Buddhism the nembutsu is said in gratitude, not to earn anything. Hide the count if you would rather not keep one.",
+    },
+    {
+      id: "namo-amituofo",
+      label: "Namo Amituofo (Chinese Pure Land)",
+      original: "南無阿彌陀佛",
+      lang: "zh-Hant",
+      reading: "Nāmó Āmítuófó",
+      note: "Recitation of the Buddha’s name, kept alongside Chan practice in many Chinese monasteries.",
+    },
+    {
+      id: "om-mani-padme-hum",
+      label: "Om Mani Padme Hum (Tibetan)",
+      original: "ཨོཾ་མ་ཎི་པདྨེ་ཧཱུྃ",
+      lang: "bo",
+      reading: "Om mani padme hum",
+      note: "The six-syllable mantra of Chenrezig (Avalokiteśvara), the bodhisattva of compassion.",
+    },
+    {
+      id: "other",
+      label: "Another mantra or name",
+      original: "",
+      lang: "en",
+      reading: "",
+      note: "Count any recitation of your own.",
+    },
+  ];
+
+  // Days worth marking on the calendar besides the moon.
+  const HOONKO_NOTE =
+    "Hōonkō (報恩講), the gathering to return gratitude, is the most important observance of the year in Shin Buddhism. It honors Shinran (1173–1263), who died on the 28th day of the 11th month. Ōtani-ha temples (Higashi Honganji) hold it November 21–28; Hongwanji-ha temples hold it in January.";
 
   const MOODS = [
     { value: 1, label: "Heavy" },
@@ -224,5 +265,5 @@ window.NHN_DATA = (function () {
     "Look up from what you're doing. Notice one thing you can see.",
   ];
 
-  return { THEMES, PRACTICES, MOODS, MEAL_TYPES, BELL_INVITATIONS };
+  return { THEMES, PRACTICES, MOODS, MEAL_TYPES, BELL_INVITATIONS, RECITATIONS, HOONKO_NOTE };
 })();

@@ -216,6 +216,16 @@ main { max-width: 640px; margin: 0 auto; }
   margin: 0;
 }
 
+.observance-note {
+  margin: 18px 0 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--seal);
+  max-width: 34em;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
 details.card > summary {
   cursor: pointer;
   list-style: none;
@@ -429,8 +439,57 @@ button.danger { border-color: var(--seal); color: var(--seal); }
   font-family: var(--font-display);
   font-size: 2.8rem;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 18px;
+  line-height: 1.2;
 }
+.segment-label {
+  margin: 4px 0 20px;
+  min-height: 1.6em;
+  font-family: var(--font-display);
+  color: var(--ink-soft);
+}
+
+/* ---------- Recite ---------- */
+.recite-original {
+  font-family: var(--font-brush);
+  font-size: 2rem;
+  letter-spacing: 0.12em;
+  margin: 10px 0 0;
+}
+.recite-original:lang(bo) { font-family: "Noto Serif Tibetan", "Kailasa", serif; letter-spacing: 0; }
+.recite-reading { font-family: var(--font-display); color: var(--ink-soft); margin: 2px 0 6px; }
+.recite-btn {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  margin: 6px auto 4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.recite-btn:hover { border: none; }
+.recite-btn canvas { position: absolute; }
+/* A faint guide circle: the round of 108 the ensō fills as you recite. */
+.recite-btn::before {
+  content: "";
+  position: absolute;
+  inset: 29px;
+  border-radius: 50%;
+  border: 1px dashed var(--rule);
+}
+.recite-btn:active .recite-count { transform: scale(0.94); }
+.recite-count {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.08s ease;
+}
+.centered-row { justify-content: center; }
+.recite-note { max-width: 30em; margin: 14px auto 0; line-height: 1.6; }
 
 /* ---------- Bell ---------- */
 .bell-btn {
@@ -506,7 +565,14 @@ button.danger { border-color: var(--seal); color: var(--seal); }
 }
 .cal-cell.today .cal-num { color: var(--seal); font-weight: 700; }
 .cal-cell.selected .cal-num { box-shadow: 0 0 0 1.5px var(--ink); }
-.cal-tag { font-size: 0.6rem; color: var(--ink-faint); }
+.cal-tag { font-size: 0.6rem; line-height: 1.2; color: var(--ink-faint); }
+.obs-mark {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  background: var(--seal);
+  vertical-align: middle;
+}
 .cal-dots { display: flex; gap: 3px; margin-top: auto; }
 
 .moon {
@@ -526,7 +592,7 @@ button.danger { border-color: var(--seal); color: var(--seal); }
 .dot-sit { background: var(--moss); }
 
 .legend { margin-top: 14px; line-height: 2; }
-.legend .dot, .legend .moon { margin-left: 10px; }
+.legend .dot, .legend .moon, .legend .obs-mark { margin-left: 10px; }
 .diary-snip { white-space: pre-wrap; line-height: 1.7; font-family: var(--font-display); }
 
 /* ---------- Month ---------- */
@@ -590,4 +656,5 @@ button.danger { border-color: var(--seal); color: var(--seal); }
 @media (prefers-reduced-motion: reduce) {
   .breath-circle, .bell-btn canvas { transition: none; }
   .bell-ring.ringing { animation: none; }
+  .recite-count { transition: none; }
 }
