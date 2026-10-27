@@ -1,4 +1,4 @@
-// Ink drawing for Nhat Hanh November: brushed ensō circles, a seal, the
+// Ink drawing for Desert Zendo November: brushed ensō circles, a seal, the
 // paper's fibers and a brushed rule. Everything is drawn on canvas from the
 // page's color tokens, so it follows light and dark mode and ships no images.
 //

@@ -6,7 +6,7 @@ translations, dedicated to the public domain under CC0). The output is a
 static JS file, so the app needs no network access at runtime.
 
 Usage:
-    python3 tools/build_readings.py            # from nhat-hanh-november/
+    python3 tools/build_readings.py            # from desert-zendo-november/
 
 Each entry in DAYS is (uid, file path under translation/en/sujato/sutta,
 list of ranges[, (citation, title)]). The optional pair overrides the

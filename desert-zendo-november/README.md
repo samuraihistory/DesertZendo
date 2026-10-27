@@ -1,8 +1,12 @@
-# Nhat Hanh November
+# Desert Zendo November
 
-A 30-day practice companion for a happier, healthier November, inspired by
-the everyday mindfulness Thich Nhat Hanh taught in the 1990s and 2000s:
-breathing, walking, eating, listening, and resting with full attention.
+*日日是好日 — Every day is a good day.*
+
+A 30-day practice companion for a happier, healthier November. It draws on
+the everyday mindfulness Thich Nhat Hanh taught in the 1990s and 2000s
+(breathing, walking, eating, listening, and resting with full attention),
+and on the Chan, Zen, Pure Land and Tibetan traditions. The motto is
+Yunmen's.
 
 Independent and unaffiliated: all practice text is original, the bell is
 synthesized in the browser, daily readings are public-domain (CC0)
@@ -19,7 +23,7 @@ the repo root.
 python3 -m http.server 8000
 ```
 
-then visit `http://localhost:8000/nhat-hanh-november/`. Opening `index.html`
+then visit `http://localhost:8000/desert-zendo-november/`. Opening `index.html`
 directly also works.
 
 ## Features
@@ -30,7 +34,8 @@ directly also works.
   minutes, mood, diary, gratitude, and an intention for tomorrow. Saves as you type.
 - **Meals**: log each meal with hunger and fullness, plus plant-based,
   paused-before-eating, no-screens, and ate-slowly flags.
-- **Sit**: meditation timer with opening, interval and closing bells, an
+- **Sit**: meditation timer with zendo-style bells (three to begin, one to
+  end) or a simpler one-and-two pattern, optional interval bells, an
   optional breathing guide, and a walking-session mode. Finished sessions
   are logged automatically.
 - **Bell**: a bell you can sound on demand, or set to ring at varied

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nhat Hanh November</title>
+<title>Desert Zendo November</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
@@ -17,10 +17,10 @@
   </div>
   <div class="header-text">
     <div class="title-row">
-      <h1>Nhat Hanh November</h1>
+      <h1>Desert Zendo November</h1>
       <canvas class="seal" data-seal="息" data-size="30" role="img" aria-label="Seal: breath"></canvas>
     </div>
-    <p class="subtitle">Thirty days of mindful living</p>
+    <p class="subtitle"><span class="motto" lang="zh-Hant">日日是好日</span> Every day is a good day</p>
     <p class="day-label" id="dayLabel">Day — of 30</p>
   </div>
 </header>
@@ -148,6 +148,13 @@
       </div>
       <div class="timer" id="timerDisplay">20:00</div>
 
+      <div class="field-row centered">
+        <label for="sitStyle">Bells</label>
+        <select id="sitStyle">
+          <option value="zendo">Zendo: three to begin, one to end</option>
+          <option value="simple">Simple: one to begin, two to end</option>
+        </select>
+      </div>
       <div class="field-row centered">
         <label for="sitLength">Minutes</label>
         <input type="number" id="sitLength" min="1" max="180" value="20">
@@ -282,9 +289,10 @@
     </div>
 
     <p class="muted disclaimer">
-      An independent, personal practice tool inspired by the everyday teachings of
-      Thich Nhat Hanh. Not affiliated with or endorsed by Plum Village or any
-      associated organization. Practice text is original to this app. Daily
+      An independent, personal practice tool, inspired by the everyday teachings of
+      Thich Nhat Hanh and by the Chan, Zen, Pure Land and Tibetan traditions.
+      Not affiliated with or endorsed by Plum Village or any other
+      organization. Practice text is original to this app. Daily
       readings are Bhikkhu Sujato's translations from SuttaCentral (public
       domain, CC0). Zen sayings are public-domain classics in English
       renderings written for this app.

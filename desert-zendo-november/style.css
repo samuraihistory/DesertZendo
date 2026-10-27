@@ -113,6 +113,13 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 500; text-wrap: bala
 .seal { flex: none; transform: rotate(-3deg); }
 
 .subtitle { margin: 4px 0 0; color: var(--ink-soft); }
+.motto {
+  font-family: var(--font-brush);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  display: block;
+}
 
 .day-label {
   margin: 6px 0 0;

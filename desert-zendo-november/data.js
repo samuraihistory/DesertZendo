@@ -1,4 +1,4 @@
-// Content for Nhat Hanh November.
+// Content for Desert Zendo November.
 //
 // All practice text below is original wording written for this app. It is
 // inspired by the everyday practices Thich Nhat Hanh taught in the 1990s and

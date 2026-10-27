@@ -1,6 +1,6 @@
 # Datasets and sources
 
-Research notes for Nhat Hanh November: what open data the app can build on,
+Research notes for Desert Zendo November: what open data the app can build on,
 and what to keep out so the app stays independent of Plum Village's
 intellectual property. This is practical guidance, not legal advice.
 
@@ -47,11 +47,10 @@ intellectual property. This is practical guidance, not legal advice.
   protected, but they read as Plum Village vocabulary. The app uses plain
   descriptions instead ("an unscheduled day," "starting over," "what grows
   from difficulty").
-- **His name.** Using "Nhat Hanh" in the app title is the biggest remaining
-  IP and right-of-publicity touchpoint. Before publishing beyond personal
-  use, search USPTO, EUIPO and the French INPI registers for his name and
-  "Plum Village" marks. Keep the "not affiliated" disclaimer (it's on the
-  Month tab).
+- **His name.** The app was first called "Nhat Hanh November"; it is now
+  "Desert Zendo November", so his name appears only as a credited
+  inspiration in the About text. Keep it that way, and keep the "not
+  affiliated" disclaimer (it's on the Month tab).
 
 ## Datasets
 

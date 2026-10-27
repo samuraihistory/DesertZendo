@@ -42,6 +42,6 @@ then visit `http://localhost:8000`.
 
 ## Also in this repo
 
-[`nhat-hanh-november/`](nhat-hanh-november/) — a 30-day November practice
+[`desert-zendo-november/`](desert-zendo-november/) — a 30-day November practice
 companion with a diary, calendar, meal tracker, mindfulness bell and
 meditation timer. See its README.

@@ -115,6 +115,7 @@
       year: defaultYear(),
       bell: { every: 30, from: "08:00", to: "20:00", volume: 0.6 },
       cardsOpen: { readingCard: true, zenCard: true },
+      sitStyle: "zendo",
     };
     if (!saved) return base;
     return {
@@ -608,10 +609,12 @@
     { ratio: 8.93, gain: 0.08, decay: 1.6 },
   ];
 
+  // Returns the bell's output node, so a bell scheduled for later can be
+  // silenced by disconnecting it.
   function strikeBell(delaySec = 0) {
     const ctx = ensureAudio();
     const volume = settings.bell.volume;
-    if (volume <= 0) return;
+    if (volume <= 0) return null;
     const t0 = ctx.currentTime + delaySec;
     const base = 196; // G3
     const master = ctx.createGain();
@@ -629,10 +632,13 @@
       osc.start(t0);
       osc.stop(t0 + p.decay + 0.1);
     });
+    return master;
   }
 
   function strikeBells(count, spacingSec = 5) {
-    for (let i = 0; i < count; i++) strikeBell(i * spacingSec);
+    const bells = [];
+    for (let i = 0; i < count; i++) bells.push(strikeBell(i * spacingSec));
+    return bells;
   }
 
   // ---------- Mindfulness bell ----------
@@ -730,8 +736,23 @@
   const breathCircle = document.getElementById("breathCircle");
   const breathText = document.getElementById("breathText");
   const sitStatus = document.getElementById("sitStatus");
+  const sitStyle = document.getElementById("sitStyle");
 
-  let sit = null; // { start, end, interval, nextInterval, tick, breath, wakeLock }
+  // Zendo style: three bells, each left to fade, open the sitting and the
+  // clock starts on the third; a single bell closes it.
+  const OPENING_BELL_SPACING = 5; // seconds
+  const SIT_STYLES = {
+    zendo: { opening: 3, closing: 1 },
+    simple: { opening: 1, closing: 2 },
+  };
+
+  sitStyle.value = settings.sitStyle;
+  sitStyle.addEventListener("change", () => {
+    settings.sitStyle = sitStyle.value;
+    saveSettings();
+  });
+
+  let sit = null; // { start, end, interval, nextInterval, tick, breath, wakeLock, ... }
 
   function formatClock(ms) {
     const total = Math.max(0, Math.ceil(ms / 1000));
@@ -772,8 +793,9 @@
     const minutes = Number(sitLength.value) || 0;
     if (minutes <= 0) return;
     ensureAudio();
-    strikeBell();
-    const start = Date.now();
+    const style = SIT_STYLES[sitStyle.value] || SIT_STYLES.zendo;
+    const openingBells = strikeBells(style.opening, OPENING_BELL_SPACING);
+    const start = Date.now() + (style.opening - 1) * OPENING_BELL_SPACING * 1000;
     const interval = Number(sitInterval.value) * 60000;
     sit = {
       start,
@@ -781,8 +803,12 @@
       interval,
       nextInterval: interval ? start + interval : Infinity,
       walking: sitWalking.checked,
+      closingBells: style.closing,
+      openingBells,
+      openingCount: style.opening,
+      breathPace: Number(breathPace.value),
+      breath: null,
     };
-    sit.breath = startBreathGuide(Number(breathPace.value));
     sit.tick = setInterval(onSitTick, 250);
     sit.wakeLock = await requestWakeLock();
     sitStartBtn.disabled = true;
@@ -795,6 +821,15 @@
 
   function onSitTick() {
     const now = Date.now();
+    if (now < sit.start) {
+      // Still inside the opening bells.
+      const elapsed = (sit.openingCount - 1) * OPENING_BELL_SPACING * 1000 - (sit.start - now);
+      const bell = Math.min(sit.openingCount, Math.floor(elapsed / (OPENING_BELL_SPACING * 1000)) + 1);
+      breathText.textContent = `Bell ${bell} of ${sit.openingCount}`;
+      timerDisplay.textContent = formatClock(sit.end - sit.start);
+      return;
+    }
+    if (sit.breath === null) sit.breath = startBreathGuide(sit.breathPace);
     timerDisplay.textContent = formatClock(sit.end - now);
     if (now >= sit.end) {
       finishSit(false);
@@ -807,9 +842,12 @@
   }
 
   function finishSit(early) {
-    const minutes = Math.round((Date.now() - sit.start) / 60000);
+    const minutes = Math.max(0, Math.round((Date.now() - sit.start) / 60000));
     clearInterval(sit.tick);
     clearInterval(sit.breath);
+    // Silence any opening bells that haven't rung yet.
+    if (early) sit.openingBells.forEach((bell) => bell && bell.disconnect());
+    const closingBells = sit.closingBells;
     if (sit.wakeLock) sit.wakeLock.release().catch(() => {});
     const walking = sit.walking;
     sit = null;
@@ -818,7 +856,7 @@
     sitStartBtn.disabled = false;
     sitStopBtn.disabled = true;
     showIdleTimer();
-    if (!early) strikeBells(2);
+    if (!early) strikeBells(closingBells);
 
     if (minutes < 1) {
       sitStatus.textContent = "Session under a minute — not logged.";
@@ -999,7 +1037,7 @@
   }
 
   function buildDiaryMarkdown() {
-    let out = `# Nhat Hanh November ${settings.year}\n\n`;
+    let out = `# Desert Zendo November ${settings.year}\n\n`;
     monthRecords().forEach(({ day, iso, rec }) => {
       if (!wasPracticed(rec) && !rec.gratitude && !rec.intention) return;
       const theme = THEMES[day - 1];
@@ -1045,7 +1083,7 @@
   }
 
   document.getElementById("exportDiaryBtn").addEventListener("click", () => {
-    downloadFile(`nhat-hanh-november-${settings.year}.md`, buildDiaryMarkdown(), "text/markdown");
+    downloadFile(`desert-zendo-november-${settings.year}.md`, buildDiaryMarkdown(), "text/markdown");
   });
 
   // ---------- Settings ----------
@@ -1062,7 +1100,7 @@
 
   document.getElementById("exportDataBtn").addEventListener("click", () => {
     const payload = { settings, days };
-    downloadFile("nhat-hanh-november-backup.json", JSON.stringify(payload, null, 2), "application/json");
+    downloadFile("desert-zendo-november-backup.json", JSON.stringify(payload, null, 2), "application/json");
   });
 
   document.getElementById("importDataInput").addEventListener("change", (e) => {
@@ -1120,6 +1158,7 @@
 
   function refreshAll() {
     loadBellForm();
+    sitStyle.value = settings.sitStyle;
     applyCardsOpen();
     selected = clampToNovember(selected);
     renderHeader();
